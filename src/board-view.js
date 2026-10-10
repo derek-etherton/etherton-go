@@ -21,18 +21,36 @@ export function drawDefs(svg, cell) {
   }, shadow);
 }
 
-export function drawGrid(svg, { width, height, cell, cx, cy }) {
-  svgElement('rect', { width: '100%', height: '100%', fill: 'url(#wood)' }, svg);
-  const lines = svgElement('g', {
-    stroke: theme.line, 'stroke-width': Math.max(1.5, cell * 0.018), 'stroke-linecap': 'square',
-  }, svg);
-  const cols = Math.ceil(width / 2 / cell) + 1;
-  const rows = Math.ceil(height / 2 / cell) + 1;
-  for (let i = -cols; i <= cols; i++) {
-    svgElement('line', { x1: cx + i * cell, x2: cx + i * cell, y1: 0, y2: height }, lines);
+// Without bounds the grid fills the screen. With bounds ({ min, max } in
+// board coordinates) a finite board is drawn on a table.
+export function drawGrid(svg, { width, height, cell, originX, originY, bounds, showGrid }) {
+  let [firstX, lastX, firstY, lastY] = [
+    -Math.ceil(originX / cell), Math.floor((width - originX) / cell),
+    -Math.ceil(originY / cell), Math.floor((height - originY) / cell),
+  ];
+  let [top, bottom, left, right] = [0, height, 0, width];
+
+  if (bounds) {
+    const { min, max } = bounds;
+    [firstX, lastX, firstY, lastY] = [min[0], max[0], min[1], max[1]];
+    [left, right] = [originX + (min[0] - 0.5) * cell, originX + (max[0] + 0.5) * cell];
+    [top, bottom] = [originY + (min[1] - 0.5) * cell, originY + (max[1] + 0.5) * cell];
+    svgElement('rect', { width: '100%', height: '100%', fill: theme.table }, svg);
   }
-  for (let j = -rows; j <= rows; j++) {
-    svgElement('line', { y1: cy + j * cell, y2: cy + j * cell, x1: 0, x2: width }, lines);
+  svgElement('rect', { x: left, y: top, width: right - left, height: bottom - top, fill: 'url(#wood)' }, svg);
+  if (!showGrid) return;
+  const lines = svgElement('g', {
+    stroke: theme.line, 'stroke-width': Math.max(0.5, cell * 0.018), 'stroke-linecap': 'square',
+  }, svg);
+
+  // Lines run to the edge of the wood (screen edge when unbounded).
+  const lineTop = bounds ? originY + firstY * cell : 0, lineBottom = bounds ? originY + lastY * cell : height;
+  const lineLeft = bounds ? originX + firstX * cell : 0, lineRight = bounds ? originX + lastX * cell : width;
+  for (let i = firstX; i <= lastX; i++) {
+    svgElement('line', { x1: originX + i * cell, x2: originX + i * cell, y1: lineTop, y2: lineBottom }, lines);
+  }
+  for (let j = firstY; j <= lastY; j++) {
+    svgElement('line', { y1: originY + j * cell, y2: originY + j * cell, x1: lineLeft, x2: lineRight }, lines);
   }
 }
 

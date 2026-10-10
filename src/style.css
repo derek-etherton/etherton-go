@@ -35,3 +35,20 @@ html, body { height: 100%; overflow: hidden; background: var(--wood); }
   to   { opacity: 1; transform: none; filter: none; }
 }
 @media (prefers-reduced-motion: reduce) { #caption span { animation-duration: .01s; } }
+
+.ghost { opacity: .5; pointer-events: none; }
+
+.stone.captured { animation: captured .5s ease-in forwards; pointer-events: none; }
+@keyframes captured {
+  to { opacity: 0; transform: scale(.7); }
+}
+@media (prefers-reduced-motion: reduce) { .stone.captured { animation-duration: .01s; } }
+
+/* Scene transitions: the director toggles body.fading */
+#stage, #caption { transition: opacity .8s ease; }
+body.fading #stage, body.fading #caption { opacity: 0; }
+
+#caption.centered {
+  top: 50%; line-height: 1.5;
+  font-size: min(calc(var(--cell) * .34), 4.8vw);
+}
